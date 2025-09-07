@@ -1,9 +1,30 @@
+import * as Joi from 'joi';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        NODE_ENV: Joi.string().valid('development', 'production', 'test'),
+        APP_PORT: Joi.number().port(),
+        MONGO_CONTAINER: Joi.string().optional(),
+        MONGO_PORT: Joi.number().port(),
+      }),
+      validationOptions: {
+        abortEarly: true,
+      },
+    }),
+    MongooseModule.forRoot(process.env.MONGO_URL),
+    UsersModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
