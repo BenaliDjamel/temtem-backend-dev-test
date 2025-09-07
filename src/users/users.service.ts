@@ -16,6 +16,6 @@ export class UsersService {
     const createdUser = new this.userModel(userData);
     await createdUser.save();
 
-    return { email: createdUser.email, roles: createdUser.roles } as User;
+    return { email: createdUser.email, role: createdUser.role } as User;
   }
 }

@@ -16,6 +16,9 @@ import { AuthModule } from './auth/auth.module';
         APP_PORT: Joi.number().port(),
         MONGO_CONTAINER: Joi.string().optional(),
         MONGO_PORT: Joi.number().port(),
+        JWT_SECRET: Joi.string().required(),
+        JWT_EXPIRES_IN: Joi.string().required(),
+        SALT_OR_ROUNDS: Joi.number().required(),
       }),
       validationOptions: {
         abortEarly: true,
