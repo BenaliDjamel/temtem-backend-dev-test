@@ -1,5 +1,5 @@
 import slugify from 'slugify';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { Store } from './schemas/store.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -22,5 +22,21 @@ export class StoresService {
     await createdStore.save();
 
     return createdStore;
+  }
+
+  async findById(id: Types.ObjectId): Promise<Store> {
+    return await this.storeModel.findById(id);
+  }
+
+  async isStoreOwner(
+    user: UserDocument,
+    storeId: Types.ObjectId,
+  ): Promise<boolean> {
+    const store = await this.storeModel.findById(storeId);
+    if (!store) return false;
+
+    if (!store.owner.equals(user._id)) return false;
+
+    return true;
   }
 }
