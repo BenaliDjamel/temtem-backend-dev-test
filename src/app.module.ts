@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { RolesGuard } from './common/guards/roles.guards';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RolesGuard } from './common/guards/roles.guards';
     UsersModule,
     AuthModule,
     StoresModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [
