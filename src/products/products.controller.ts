@@ -6,15 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { ProductsService } from './products.service';
+import { QueryFilterDto } from './dto/query-filter.dto';
 import { User } from '../users/decorators/user.decorator';
 import { Roles } from '../common/metadata/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
-import { Public } from 'src/common/metadata/public.decorator';
+import { Public } from '../common/metadata/public.decorator';
 import { SYSTEM_ROLES } from '../common/constants/roles.constants';
 
 @Controller('products')
@@ -32,8 +34,8 @@ export class ProductsController {
 
   @Get()
   @Public()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() queryFilter: QueryFilterDto) {
+    return this.productsService.findAll(queryFilter);
   }
 
   @Get('store/:slug')

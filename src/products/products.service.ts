@@ -6,11 +6,14 @@ import {
 import slugify from 'slugify';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { StoresService } from 'src/stores/stores.service';
+import { QueryFilterDto } from './dto/query-filter.dto';
+import { StoresService } from '../stores/stores.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Order } from '../common/constants/order.constants';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Product, ProductDocument } from './schemas/product.schema';
+import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
 
 @Injectable()
 export class ProductsService {
@@ -30,8 +33,38 @@ export class ProductsService {
     });
   }
 
-  async findAll() {
-    return await this.productModel.find();
+  async findAll(
+    queryFilter: QueryFilterDto,
+  ): Promise<PaginationResultDto<Product>> {
+    const {
+      category,
+      order = Order.ASC,
+      orderBy = 'createdAt',
+      page = 1,
+      limit = 10,
+    } = queryFilter;
+
+    const query: Record<string, any> = {};
+    if (category) query.category = category;
+
+    const sort: Record<string, 1 | -1> = {
+      [orderBy]: order === Order.DESC ? -1 : 1,
+    };
+
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.productModel.find(query).sort(sort).skip(skip).limit(limit),
+      this.productModel.countDocuments(query),
+    ]);
+
+    return new PaginationResultDto<Product>({
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   async listStoreOwnerProducts(
