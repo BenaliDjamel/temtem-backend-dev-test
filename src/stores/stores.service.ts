@@ -1,7 +1,7 @@
 import slugify from 'slugify';
 import { Model, Types } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { Store } from './schemas/store.schema';
+import { Store, StoreDocument } from './schemas/store.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateStoreDto } from './dtos/create-store';
 import { UserDocument } from 'src/users/schemas/user.schema';

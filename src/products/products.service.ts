@@ -6,11 +6,11 @@ import {
 import slugify from 'slugify';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Product } from './schemas/product.schema';
 import { StoresService } from 'src/stores/stores.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
+import { Product, ProductDocument } from './schemas/product.schema';
 
 @Injectable()
 export class ProductsService {
@@ -30,8 +30,24 @@ export class ProductsService {
     });
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll() {
+    return await this.productModel.find();
+  }
+
+  async listStoreOwnerProducts(
+    slug: string,
+    owner: UserDocument,
+  ): Promise<ProductDocument[]> {
+    const store = await this.storesService.findBySlug(slug);
+    if (!store) throw new NotFoundException('Store not found');
+
+    const isStoreOwner = await this.storesService.isStoreOwner(
+      owner,
+      store._id,
+    );
+    if (!isStoreOwner) throw new ForbiddenException();
+
+    return await this.productModel.find({ store: store._id });
   }
 
   async findOne(slug: string) {

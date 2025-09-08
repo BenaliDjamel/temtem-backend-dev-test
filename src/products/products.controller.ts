@@ -31,8 +31,18 @@ export class ProductsController {
   }
 
   @Get()
+  @Public()
   findAll() {
     return this.productsService.findAll();
+  }
+
+  @Get('store/:slug')
+  @Roles(SYSTEM_ROLES.STORE_OWNER)
+  listStoreOwnerProducts(
+    @Param('slug') slug: string,
+    @User() user: UserDocument,
+  ) {
+    return this.productsService.listStoreOwnerProducts(slug, user);
   }
 
   @Public()
