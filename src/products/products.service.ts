@@ -22,6 +22,14 @@ export class ProductsService {
     private storesService: StoresService,
   ) {}
 
+  private async assertStoreOwner(
+    owner: UserDocument,
+    storeId: Types.ObjectId,
+  ): Promise<void> {
+    const isStoreOwner = await this.storesService.isStoreOwner(owner, storeId);
+    if (!isStoreOwner) throw new ForbiddenException();
+  }
+
   async create(createProductDto: CreateProductDto, createdBy: UserDocument) {
     const store = await this.storesService.findById(createProductDto.store);
     if (!store) throw new NotFoundException('Store not found');
@@ -74,11 +82,7 @@ export class ProductsService {
     const store = await this.storesService.findBySlug(slug);
     if (!store) throw new NotFoundException('Store not found');
 
-    const isStoreOwner = await this.storesService.isStoreOwner(
-      owner,
-      store._id,
-    );
-    if (!isStoreOwner) throw new ForbiddenException();
+    await this.assertStoreOwner(owner, store._id);
 
     return await this.productModel.find({ store: store._id });
   }
@@ -98,12 +102,7 @@ export class ProductsService {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Product not found');
 
-    const isStoreOwner = await this.storesService.isStoreOwner(
-      owner,
-      product.store,
-    );
-
-    if (!isStoreOwner) throw new ForbiddenException();
+    await this.assertStoreOwner(owner, product.store);
 
     await this.productModel.updateOne({ _id: id }, updateProductDto);
 
@@ -114,12 +113,7 @@ export class ProductsService {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Product not found');
 
-    const isStoreOwner = await this.storesService.isStoreOwner(
-      owner,
-      product.store,
-    );
-
-    if (!isStoreOwner) throw new ForbiddenException();
+    await this.assertStoreOwner(owner, product.store);
 
     await this.productModel.deleteOne({ _id: id });
 
