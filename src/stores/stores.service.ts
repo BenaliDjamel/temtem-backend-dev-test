@@ -28,6 +28,10 @@ export class StoresService {
     return await this.storeModel.findById(id);
   }
 
+  async findBySlug(slug: string): Promise<StoreDocument> {
+    return await this.storeModel.findOne({ slug });
+  }
+
   async isStoreOwner(
     user: UserDocument,
     storeId: Types.ObjectId,
