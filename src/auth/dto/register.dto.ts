@@ -6,18 +6,18 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { SYSTEM_ROLES } from '../../common/constants/roles.constants';
+import { SYSTEM_ROLES } from 'src/common/constants/roles.constants';
 
 export class RegisterUserDto {
   @IsEmail()
-  readonly email: string;
+  email: string;
 
   @IsEnum(SYSTEM_ROLES)
   @IsOptional()
-  readonly role: string;
+  role: string;
 
   @MaxLength(15)
   @MinLength(6)
   @IsNotEmpty()
-  readonly password: string;
+  password: string;
 }
