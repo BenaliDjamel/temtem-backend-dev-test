@@ -7,8 +7,14 @@ import {
   Param,
   Delete,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { memoryStorage } from 'multer';
 import { ProductsService } from './products.service';
 import { QueryFilterDto } from './dto/query-filter.dto';
 import { User } from '../users/decorators/user.decorator';
@@ -18,6 +24,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Public } from '../common/metadata/public.decorator';
 import { SYSTEM_ROLES } from '../common/constants/roles.constants';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('products')
 export class ProductsController {
@@ -25,11 +32,29 @@ export class ProductsController {
 
   @Post()
   @Roles(SYSTEM_ROLES.STORE_OWNER)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: 2 * 1024 * 1024 },
+    }),
+  )
   create(
     @Body() createProductDto: CreateProductDto,
     @User() user: UserDocument,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), //2MB
+          new FileTypeValidator({
+            fileType: /^(image\/(png|jpeg|jpg|webp|gif))$/i,
+          }),
+        ],
+      }),
+    )
+    file?: Express.Multer.File,
   ) {
-    return this.productsService.create(createProductDto, user);
+    return this.productsService.create(createProductDto, user, file);
   }
 
   @Get()

@@ -6,6 +6,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Types } from 'mongoose';
 import { ParseObjectId } from 'nestjs-object-id';
 
@@ -20,15 +21,14 @@ export class CreateProductDto {
 
   @IsNumber()
   @Min(0)
+  @Type(() => Number)
   price: number;
 
   @IsString()
   @IsNotEmpty()
   category: string;
 
-  @IsString()
-  @IsNotEmpty()
-  image: string;
+  image?: string;
 
   @ParseObjectId()
   store: Types.ObjectId;

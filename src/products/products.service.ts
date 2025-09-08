@@ -14,12 +14,14 @@ import { Order } from '../common/constants/order.constants';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
+import { S3Service } from '../common/services/s3.service';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
     private storesService: StoresService,
+    private readonly s3Service: S3Service,
   ) {}
 
   private async assertStoreOwner(
@@ -30,13 +32,29 @@ export class ProductsService {
     if (!isStoreOwner) throw new ForbiddenException();
   }
 
-  async create(createProductDto: CreateProductDto, createdBy: UserDocument) {
+  async create(
+    createProductDto: CreateProductDto,
+    createdBy: UserDocument,
+    file?: Express.Multer.File,
+  ) {
     const store = await this.storesService.findById(createProductDto.store);
     if (!store) throw new NotFoundException('Store not found');
 
+    const slug = slugify(`${store.name}-${createProductDto.name}`);
+
+    let imageUrl = createProductDto.image;
+    if (file && file.buffer && file.mimetype.startsWith('image/')) {
+      imageUrl = await this.s3Service.uploadPublicFile({
+        fileBuffer: file.buffer,
+        contentType: file.mimetype,
+        keyPrefix: `stores/${store.slug}/products/${slug}`,
+      });
+    }
+
     return await this.productModel.create({
       ...createProductDto,
-      slug: slugify(`${store.name}-${createProductDto.name}`),
+      image: imageUrl || createProductDto.image,
+      slug,
       createdBy: createdBy._id,
     });
   }

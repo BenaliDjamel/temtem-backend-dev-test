@@ -24,6 +24,10 @@ import { ProductsModule } from './products/products.module';
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRES_IN: Joi.string().required(),
         SALT_OR_ROUNDS: Joi.number().required(),
+        AWS_REGION: Joi.string().optional(),
+        AWS_S3_BUCKET: Joi.string().optional(),
+        AWS_ACCESS_KEY_ID: Joi.string().optional(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
       }),
       validationOptions: {
         abortEarly: true,
