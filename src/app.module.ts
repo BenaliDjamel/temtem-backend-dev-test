@@ -1,11 +1,15 @@
 import * as Joi from 'joi';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { AuthGuard } from './auth/auth.guard';
 import { AppController } from './app.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { StoresModule } from './stores/stores.module';
+import { RolesGuard } from './common/guards/roles.guards';
 
 @Module({
   imports: [
@@ -27,8 +31,19 @@ import { AuthModule } from './auth/auth.module';
     MongooseModule.forRoot(process.env.MONGO_URL),
     UsersModule,
     AuthModule,
+    StoresModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}
