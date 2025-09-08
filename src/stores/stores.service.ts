@@ -24,7 +24,7 @@ export class StoresService {
     return createdStore;
   }
 
-  async findById(id: Types.ObjectId): Promise<Store> {
+  async findById(id: Types.ObjectId): Promise<StoreDocument> {
     return await this.storeModel.findById(id);
   }
 
@@ -32,7 +32,7 @@ export class StoresService {
     user: UserDocument,
     storeId: Types.ObjectId,
   ): Promise<boolean> {
-    const store = await this.storeModel.findById(storeId);
+    const store = await this.findById(storeId);
     if (!store) return false;
 
     if (!store.owner.equals(user._id)) return false;
