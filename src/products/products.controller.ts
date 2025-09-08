@@ -14,6 +14,7 @@ import { Roles } from '../common/metadata/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
+import { Public } from 'src/common/metadata/public.decorator';
 import { SYSTEM_ROLES } from '../common/constants/roles.constants';
 
 @Controller('products')
@@ -34,6 +35,7 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
+  @Public()
   @Get(':slug')
   findOne(@Param('slug') slug: string) {
     return this.productsService.findOne(slug);
