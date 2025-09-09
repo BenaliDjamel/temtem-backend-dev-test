@@ -45,6 +45,10 @@ A NestJS + MongoDB backend for a really simple e‑commerce domain with authenti
 
 Swagger docs at `/docs` (auth via Bearer token in UI).
 
+## Database Diagram
+<img width="232" height="640" alt="image" src="https://github.com/user-attachments/assets/b304577c-ea7e-48d4-88ba-34e286100d00" />
+
+
 ## Environment Variables
 
 The app validates env with Joi (see `app.module.ts`). Required:
