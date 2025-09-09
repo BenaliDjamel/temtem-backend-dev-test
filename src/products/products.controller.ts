@@ -16,21 +16,24 @@ import {
 import { Types } from 'mongoose';
 import { memoryStorage } from 'multer';
 import { ProductsService } from './products.service';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { QueryFilterDto } from './dto/query-filter.dto';
 import { User } from '../users/decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Roles } from '../common/metadata/roles.decorator';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Public } from '../common/metadata/public.decorator';
 import { SYSTEM_ROLES } from '../common/constants/roles.constants';
-import { FileInterceptor } from '@nestjs/platform-express';
 
+@ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
+  @ApiBearerAuth('bearer')
   @Roles(SYSTEM_ROLES.STORE_OWNER)
   @UseInterceptors(
     FileInterceptor('image', {
@@ -38,6 +41,24 @@ export class ProductsController {
       limits: { fileSize: 2 * 1024 * 1024 },
     }),
   )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
+        price: { type: 'number' },
+        category: { type: 'string' },
+        store: { type: 'string' },
+        image: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['name', 'price', 'category', 'store'],
+    },
+  })
   create(
     @Body() createProductDto: CreateProductDto,
     @User() user: UserDocument,
@@ -64,6 +85,7 @@ export class ProductsController {
   }
 
   @Get('store/:slug')
+  @ApiBearerAuth('bearer')
   @Roles(SYSTEM_ROLES.STORE_OWNER)
   listStoreOwnerProducts(
     @Param('slug') slug: string,
@@ -79,6 +101,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth('bearer')
   update(
     @Param('id') id: Types.ObjectId,
     @Body() updateProductDto: UpdateProductDto,
@@ -88,6 +111,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth('bearer')
   @Roles(SYSTEM_ROLES.STORE_OWNER)
   remove(@Param('id') id: Types.ObjectId, @User() user: UserDocument) {
     return this.productsService.remove(id, user);
