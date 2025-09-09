@@ -101,6 +101,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @Roles(SYSTEM_ROLES.STORE_OWNER)
   @ApiBearerAuth('bearer')
   @UseInterceptors(
     FileInterceptor('image', {
