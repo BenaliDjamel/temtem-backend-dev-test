@@ -1,74 +1,93 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Temtem Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS + MongoDB backend for a really simple e‑commerce domain with authentication, stores, and products. Includes JWT auth, role‑based access control, validation, logging, Swagger docs, and S3 image uploads.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tech Stack
 
-## Description
+- **Runtime**: Node.js, TypeScript
+- **Framework**: NestJS
+- **Database**: MongoDB (Mongoose ODM)
+- **Auth**: JWT
+- **Validation**: class-validator + class-transformer
+- **Docs**: Swagger (available at `/docs`)
+- **Logging**: nestjs-pino (pretty in dev)
+- **Storage**: AWS S3 (public uploads)
+- **Containerization**: Docker & docker-compose
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Features
 
-## Installation
+- **Authentication**: JWT-based login, registration.
+- **Authorization**: Global JWT guard with `@Public()` for open routes; `@Roles()` with `RolesGuard` for role checks.
+- **Users**: Register and login; roles include `guest` and `store-owner`.
+- **Stores**: Store owners can create stores; stores have `owner` relation to users.
+- **Products**:
+  - Store owners can create/update/delete products for their own stores.
+  - Public listing with pagination, ordering, and category filter for guests.
+  - Image upload to S3 with content-type validation and size limit (2MB).
+- **Validation & Errors**: DTO validation via `class-validator`; centralized HTTP exception filter(basic one, for production level apps it should more advanced like reporting to sentry).
+- **Logging**: Structured logging via pino, pretty-printed in development.
+- **API Docs**: Swagger available at `/docs` with Bearer auth support.
+
+## API Endpoints (summary)
+
+- **Auth**
+  - `POST /auth/login` (public): email, password → `{ access_token }`
+  - `POST /auth/register` (public): email, password, role? default guest
+- **Stores**
+  - `POST /stores` (role: store-owner): create a store
+- **Products**
+  - `POST /products` (role: store-owner, Bearer, multipart): create product with optional `image`
+  - `GET /products` (public): list with `category`, `order`, `orderBy`, `page`, `limit`
+  - `GET /products/:slug` (public): get by slug
+  - `GET /products/store/:slug` (role: store-owner, Bearer): list products for owned store
+  - `PATCH /products/:id` (role: store-owner, Bearer, multipart): update
+  - `DELETE /products/:id` (role: store-owner, Bearer): delete
+
+Swagger docs at `/docs` (auth via Bearer token in UI).
+
+## Environment Variables
+
+The app validates env with Joi (see `app.module.ts`). Required:
+
+- `APP_PORT`
+- `MONGO_URL` (compose sets it using `MONGO_CONTAINER`, `MONGO_DB`)
+- `JWT_SECRET`, `JWT_EXPIRES_IN`
+- `SALT_OR_ROUNDS`
+  Optional for S3 uploads:
+- `AWS_REGION`, `AWS_S3_BUCKET`
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+
+Example `.env` for docker-compose:
 
 ```bash
-$ npm install
+NODE_ENV=development
+APP_PORT=3000
+MONGO_CONTAINER=temtem-mongo
+MONGO_DB=temtem
+MONGO_PORT=27017
+JWT_SECRET=supersecret
+JWT_EXPIRES_IN=1d
+SALT_OR_ROUNDS=10
+AWS_REGION=eu-west-1
+AWS_S3_BUCKET=your-bucket
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
 ```
 
-## Running the app
+## Local Development
 
-```bash
-# development
-$ npm run start
+- Install deps: `npm install`
+- Run dev server: `npm run start:dev` (requires local Mongo or `MONGO_URL`)
+- Open docs: `http://localhost:${APP_PORT}/docs`
 
-# watch mode
-$ npm run start:dev
+## Docker
 
-# production mode
-$ npm run start:prod
-```
+- Ensure `.env` is present (see above).
+- Start stack: `docker-compose up -d --build`
+- API runs at `http://localhost:${APP_PORT}`; Mongo at `mongodb://localhost:${MONGO_PORT}`
 
-## Test
+## Notes
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
-# temtem-backend-dev-test
+- Global guards: `AuthGuard` (JWT) + `RolesGuard` (RBAC).
+- Public routes use `@Public()`; role-protected use `@Roles(SYSTEM_ROLES.ROLE)`.
+- Product image uploads validate mime type and size; files are stored public-read in S3 under `stores/{storeSlug}/products/{productSlug}/...`.
