@@ -8,13 +8,13 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { QueryFilterDto } from './dto/query-filter.dto';
 import { StoresService } from '../stores/stores.service';
+import { S3Service } from '../common/services/s3.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Order } from '../common/constants/order.constants';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
-import { S3Service } from '../common/services/s3.service';
 
 @Injectable()
 export class ProductsService {
@@ -116,13 +116,30 @@ export class ProductsService {
     id: Types.ObjectId,
     updateProductDto: UpdateProductDto,
     owner: UserDocument,
+    file?: Express.Multer.File,
   ) {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Product not found');
 
     await this.assertStoreOwner(owner, product.store);
 
-    await this.productModel.updateOne({ _id: id }, updateProductDto);
+    let imageUrl = updateProductDto.image;
+
+    if (file && file.buffer && file.mimetype.startsWith('image/')) {
+      const store = await this.storesService.findById(product.store);
+      imageUrl = await this.s3Service.uploadPublicFile({
+        fileBuffer: file.buffer,
+        contentType: file.mimetype,
+        keyPrefix: `stores/${store.slug}/products/${product.slug}`,
+      });
+    }
+
+    const updateProduct: Partial<Product> = {
+      ...updateProductDto,
+      ...(imageUrl ? { image: imageUrl } : {}),
+    };
+
+    await this.productModel.updateOne({ _id: id }, updateProduct);
 
     return { message: 'Product updated successfully' };
   }

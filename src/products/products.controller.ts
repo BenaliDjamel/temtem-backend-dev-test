@@ -102,12 +102,46 @@ export class ProductsController {
 
   @Patch(':id')
   @ApiBearerAuth('bearer')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: 2 * 1024 * 1024 },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        description: { type: 'string' },
+        price: { type: 'number' },
+        category: { type: 'string' },
+        image: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   update(
     @Param('id') id: Types.ObjectId,
     @Body() updateProductDto: UpdateProductDto,
     @User() user: UserDocument,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: false,
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), //2MB
+          new FileTypeValidator({
+            fileType: /^(image\/(png|jpeg|jpg|webp|gif))$/i,
+          }),
+        ],
+      }),
+    )
+    file?: Express.Multer.File,
   ) {
-    return this.productsService.update(id, updateProductDto, user);
+    return this.productsService.update(id, updateProductDto, user, file);
   }
 
   @Delete(':id')
