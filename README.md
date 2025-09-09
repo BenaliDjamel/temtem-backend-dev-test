@@ -2,6 +2,21 @@
 
 A NestJS + MongoDB backend for a really simple e‑commerce domain with authentication, stores, and products. Includes JWT auth, role‑based access control, validation, logging, Swagger docs, and S3 image uploads.
 
+## Notes
+
+Production apps usually need extra setup, such as:
+
+- Error handling & Sentry reporting  
+- Consistent API response interfaces  
+- Unit & integration tests  
+- Soft deletes  
+- Rate limiting (e.g., 5 failed login attempts)  
+- Aggregations for reporting & queries  
+- Pagination helpers & reusable utilities  
+- Analytics (Mixpanel, Customer.io, etc.)
+
+In this project, I did what works good enough for this Technical test and requirements.
+
 ## Tech Stack
 
 - **Runtime**: Node.js, TypeScript
