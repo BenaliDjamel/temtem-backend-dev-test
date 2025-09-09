@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Store, StoreDocument } from './schemas/store.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateStoreDto } from './dtos/create-store';
-import { UserDocument } from 'src/users/schemas/user.schema';
+import { UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class StoresService {

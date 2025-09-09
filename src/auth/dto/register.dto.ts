@@ -6,7 +6,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { SYSTEM_ROLES } from 'src/common/constants/roles.constants';
+import { SYSTEM_ROLES } from '../../common/constants/roles.constants';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterUserDto {

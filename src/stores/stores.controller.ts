@@ -5,8 +5,8 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { User } from '../users/decorators/user.decorator';
 import { UserDocument } from '../users/schemas/user.schema';
-import { Roles } from 'src/common/metadata/roles.decorator';
-import { SYSTEM_ROLES } from 'src/common/constants/roles.constants';
+import { Roles } from '../common/metadata/roles.decorator';
+import { SYSTEM_ROLES } from '../common/constants/roles.constants';
 
 @ApiTags('Stores')
 @Controller('stores')
