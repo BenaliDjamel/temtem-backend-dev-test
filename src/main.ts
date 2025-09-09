@@ -1,3 +1,4 @@
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
@@ -6,8 +7,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  app.useLogger(app.get(Logger));
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -15,7 +17,7 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(app.get(HttpExceptionFilter));
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Temtem API')
@@ -39,6 +41,7 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
+  const configService = app.get(ConfigService);
   await app.listen(configService.get('APP_PORT'));
 }
 bootstrap();

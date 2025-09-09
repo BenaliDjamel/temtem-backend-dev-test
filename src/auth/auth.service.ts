@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { PinoLogger } from 'nestjs-pino';
 import { SignInUserDto } from './dto/signIn.dto';
 import { RegisterUserDto } from './dto/register.dto';
 import { UsersService } from '../users/users.service';
@@ -15,6 +16,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private usersService: UsersService,
+    private readonly logger: PinoLogger,
   ) {}
 
   async signIn(userData: SignInUserDto): Promise<any> {
@@ -25,6 +27,7 @@ export class AuthService {
     if (!isMatch) throw new NotFoundException('User does not exist');
 
     const payload = { _id: user.id, email: user.email, role: user.role };
+    this.logger.info({ userId: user.id, email: user.email }, 'User signed in');
 
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -42,6 +45,11 @@ export class AuthService {
       role: userData.role,
       password: hashedPassword,
     });
+
+    this.logger.info(
+      { email: userData.email },
+      'User registered in the platform',
+    );
 
     return {
       email: userData.email,

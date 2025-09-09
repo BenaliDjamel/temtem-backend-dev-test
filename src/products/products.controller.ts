@@ -16,7 +16,6 @@ import {
 import { Types } from 'mongoose';
 import { memoryStorage } from 'multer';
 import { ProductsService } from './products.service';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { QueryFilterDto } from './dto/query-filter.dto';
 import { User } from '../users/decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -26,6 +25,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 import { Public } from '../common/metadata/public.decorator';
 import { SYSTEM_ROLES } from '../common/constants/roles.constants';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Products')
 @Controller('products')

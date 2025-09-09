@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -9,7 +10,10 @@ export class S3Service {
   private readonly bucketName: string;
   private readonly awsRegion: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: PinoLogger,
+  ) {
     this.awsRegion = this.configService.get<string>('AWS_REGION');
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET');
 
@@ -50,16 +54,26 @@ export class S3Service {
       extension || this.getExtensionFromContentType(contentType) || 'bin';
 
     const key = `${keyPrefix}/${randomUUID()}.${fileExtension}`;
+    this.logger.debug({ key, contentType }, 'Uploading file started');
 
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: fileBuffer,
-        ACL: 'public-read',
-        ContentType: contentType,
-      }),
-    );
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: fileBuffer,
+          ACL: 'public-read', // TODO: it could be moved to the config
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      this.logger.error(
+        { err, key },
+        'Uploading file failed, something went wrong',
+      );
+
+      throw err;
+    }
 
     return `https://${this.bucketName}.s3.${this.awsRegion}.amazonaws.com/${key}`;
   }

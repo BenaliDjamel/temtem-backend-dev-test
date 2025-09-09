@@ -1,14 +1,18 @@
 import slugify from 'slugify';
 import { Model, Types } from 'mongoose';
+import { PinoLogger } from 'nestjs-pino';
 import { Injectable } from '@nestjs/common';
-import { Store, StoreDocument } from './schemas/store.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateStoreDto } from './dtos/create-store';
 import { UserDocument } from '../users/schemas/user.schema';
+import { Store, StoreDocument } from './schemas/store.schema';
 
 @Injectable()
 export class StoresService {
-  constructor(@InjectModel(Store.name) private storeModel: Model<Store>) {}
+  constructor(
+    @InjectModel(Store.name) private storeModel: Model<Store>,
+    private readonly logger: PinoLogger,
+  ) {}
 
   async create(storeData: CreateStoreDto, owner: UserDocument): Promise<Store> {
     const slug = slugify(storeData.name);
@@ -38,8 +42,13 @@ export class StoresService {
   ): Promise<boolean> {
     const store = await this.findById(storeId);
     if (!store) return false;
-
-    if (!store.owner.equals(user._id)) return false;
+    if (!store.owner.equals(user._id)) {
+      this.logger.warn(
+        { userId: user._id, storeId },
+        'User is not store owner',
+      );
+      return false;
+    }
 
     return true;
   }

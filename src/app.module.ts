@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AppService } from './app.service';
+import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 import { AuthGuard } from './auth/auth.guard';
 import { AppController } from './app.controller';
@@ -11,9 +12,42 @@ import { AuthModule } from './auth/auth.module';
 import { StoresModule } from './stores/stores.module';
 import { RolesGuard } from './common/guards/roles.guards';
 import { ProductsModule } from './products/products.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
+    LoggerModule.forRootAsync({
+      useFactory: () => {
+        const isProd = process.env.NODE_ENV === 'production';
+        return {
+          pinoHttp: {
+            level: isProd ? 'info' : 'debug',
+            transport: isProd
+              ? undefined
+              : {
+                  target: 'pino-pretty',
+                  options: {
+                    colorize: true,
+                    singleLine: true,
+                    translateTime: 'yyyy-mm-dd HH:MM:ss.l o',
+                    ignore: 'pid,hostname',
+                  },
+                },
+            redact: {
+              paths: [
+                'req.headers.authorization',
+                'req.headers.cookie',
+                'res.headers["set-cookie"]',
+              ],
+              remove: true,
+            },
+            customProps: (req) => ({
+              requestId: (req as any).id,
+            }),
+          },
+        };
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
@@ -42,6 +76,7 @@ import { ProductsModule } from './products/products.module';
   controllers: [AppController],
   providers: [
     AppService,
+    HttpExceptionFilter,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

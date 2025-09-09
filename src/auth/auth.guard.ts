@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { PinoLogger } from 'nestjs-pino';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants/constants';
@@ -15,6 +16,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private reflector: Reflector,
+    private readonly logger: PinoLogger,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -35,7 +37,11 @@ export class AuthGuard implements CanActivate {
 
     const token = this.extractTokenFromHeader(request);
 
-    if (!token) throw new UnauthorizedException();
+    if (!token) {
+      this.logger.warn({ url }, 'Missing bearer token');
+
+      throw new UnauthorizedException();
+    }
 
     try {
       const payload = await this.jwtService.verifyAsync(token, {
@@ -43,7 +49,9 @@ export class AuthGuard implements CanActivate {
       });
 
       request['user'] = payload;
-    } catch {
+    } catch (err) {
+      this.logger.warn({ err, url }, 'Invalid token');
+
       throw new UnauthorizedException();
     }
 
